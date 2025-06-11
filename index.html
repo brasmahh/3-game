@@ -1,104 +1,101 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لعبة إعادة التدوير</title>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: 'Tajawal', sans-serif;
-            background-color: #e0f7fa;
-            overflow-x: hidden;
-        }
-        .item {
-            cursor: grab;
-            transition: all 0.3s;
-            user-select: none;
-        }
-        .item:hover {
-            transform: scale(1.05);
-        }
-        .item:active {
-            cursor: grabbing;
-        }
-        .bin {
-            transition: all 0.3s;
-            min-height: 150px;
-        }
-        .bin.highlight {
-            transform: scale(1.05);
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
-        }
-        .success-animation {
-            animation: success 1s ease;
-        }
-        @keyframes success {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-        .instructions {
-            font-size: 1.2rem;
-            line-height: 1.8;
-        }
-        .star {
-            display: inline-block;
-            animation: spin 1s ease;
-        }
-        @keyframes spin {
-            0% { transform: scale(0) rotate(0deg); }
-            100% { transform: scale(1) rotate(360deg); }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>لعبة فرز النفايات</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      direction: rtl;
+      text-align: center;
+      background-color: #f0f8ff;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      margin-top: 20px;
+      color: #2a7d2e;
+    }
+
+    .game-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 30px;
+    }
+
+    .bins, .items {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 30px;
+      margin: 20px;
+    }
+
+    .bin {
+      width: 150px;
+      height: 150px;
+      border: 3px dashed #444;
+      border-radius: 15px;
+      background-color: #e0ffe0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .item {
+      width: 80px;
+      height: 80px;
+      cursor: grab;
+    }
+  </style>
 </head>
 <body>
-<!-- المحتوى السابق: التعليمات، الحاويات، العناصر، النتيجة -->
-<!-- ... (المحتوى الذي أرفقته بالكامل يبقى دون تغيير) ... -->
-<script>
-    // المتغيرات والتجهيزات كما في السكربت السابق
-    // نكمل تحديث النتيجة والتقدم:
 
-    function handleCorrectMatch(item, bin) {
-        item.style.opacity = '0';
-        setTimeout(() => {
-            item.style.display = 'none';
-        }, 300);
+  <h1>🎮 لعبة فرز النفايات</h1>
+  <p>اسحب كل عنصر وضعه في السلة الصحيحة 👇</p>
 
-        score++;
-        scoreElement.textContent = score;
-        updateProgressBar();
+  <div class="game-container">
+    <div class="bins">
+      <div class="bin" id="organic" ondrop="drop(event)" ondragover="allowDrop(event)">🍎 عضوية</div>
+      <div class="bin" id="plastic" ondrop="drop(event)" ondragover="allowDrop(event)">🧴 بلاستيك</div>
+    </div>
 
-        bin.classList.add('success-animation');
-        setTimeout(() => bin.classList.remove('success-animation'), 1000);
+    <div class="items">
+      <img src="https://cdn-icons-png.flaticon.com/512/415/415733.png" id="apple" class="item" draggable="true" ondragstart="drag(event)" data-type="organic" alt="تفاحة" />
+      <img src="https://cdn-icons-png.flaticon.com/512/1046/1046849.png" id="bottle" class="item" draggable="true" ondragstart="drag(event)" data-type="plastic" alt="زجاجة" />
+    </div>
+  </div>
 
-        if (score === totalItems) {
-            showSuccess();
-        }
+  <script>
+    function allowDrop(ev) {
+      ev.preventDefault();
     }
 
-    function handleIncorrectMatch(item) {
-        item.style.opacity = '1';
-        item.classList.add('shake');
-        setTimeout(() => item.classList.remove('shake'), 500);
+    function drag(ev) {
+      ev.dataTransfer.setData("text", ev.target.id);
     }
 
-    function updateProgressBar() {
-        const percentage = Math.round((score / totalItems) * 100);
-        progressBar.style.width = `${percentage}%`;
-        progressBar.textContent = `${percentage}%`;
-    }
+    function drop(ev) {
+      ev.preventDefault();
+      const data = ev.dataTransfer.getData("text");
+      const dragged = document.getElementById(data);
+      const itemType = dragged.getAttribute("data-type");
+      const binType = ev.target.id;
 
-    function showSuccess() {
-        feedback.textContent = "أحسنت! لقد قمت بفرز كل النفايات بشكل صحيح";
-        feedback.classList.remove('hidden');
-        resetBtn.classList.remove('hidden');
+      if (itemType === binType) {
+        ev.target.appendChild(dragged);
+        alert("✅ أحسنت! تم الفرز بشكل صحيح.");
+      } else {
+        alert("❌ خطأ! حاول مرة أخرى.");
+      }
     }
+  </script>
 
-    function resetGame() {
-        window.location.reload();
-    }
-</script>
 </body>
 </html>
