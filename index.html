@@ -8,7 +8,6 @@
       font-family: 'Arial', sans-serif;
       background-color: #f0f8ff;
       text-align: center;
-      margin: 0;
       padding: 20px;
     }
 
@@ -20,20 +19,24 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-top: 20px;
+    }
+
+    .info {
+      font-size: 1.2rem;
+      margin-bottom: 15px;
     }
 
     .bins, .items {
       display: flex;
-      gap: 30px;
+      gap: 20px;
       flex-wrap: wrap;
       justify-content: center;
       margin: 20px 0;
     }
 
     .bin {
-      width: 160px;
-      height: 160px;
+      width: 150px;
+      height: 150px;
       border: 3px dashed #444;
       border-radius: 15px;
       background-color: #e0ffe0;
@@ -41,42 +44,78 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       font-weight: bold;
-      color: #333;
     }
 
     .item {
-      width: 100px;
-      height: 100px;
+      width: 90px;
+      height: 90px;
       cursor: grab;
     }
 
+    #score, #timer {
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
     .bin.highlight {
-      background-color: #d4edda;
-      border-color: green;
+      background-color: #c2f0c2;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 1.3rem;
+      color: #2a7d2e;
     }
   </style>
 </head>
 <body>
 
   <h1>🗑️ لعبة فرز النفايات</h1>
-  <p>اسحب كل عنصر وضعه في السلة الصحيحة 👇</p>
+  <div class="info">
+    ⏳ الوقت: <span id="timer">60</span> ثانية | 🏆 النقاط: <span id="score">0</span>
+  </div>
 
   <div class="game-container">
     <div class="bins">
       <div class="bin" data-type="organic" ondragover="allowDrop(event)" ondrop="drop(event)">🍎 عضوية</div>
       <div class="bin" data-type="plastic" ondragover="allowDrop(event)" ondrop="drop(event)">🧴 بلاستيك</div>
+      <div class="bin" data-type="paper" ondragover="allowDrop(event)" ondrop="drop(event)">📄 ورق</div>
+      <div class="bin" data-type="metal" ondragover="allowDrop(event)" ondrop="drop(event)">🛢️ معدن</div>
     </div>
 
-    <div class="items">
-      <img src="https://cdn-icons-png.flaticon.com/512/415/415733.png" alt="تفاحة" class="item" draggable="true" ondragstart="drag(event)" data-type="organic" id="apple" />
-      <img src="https://cdn-icons-png.flaticon.com/512/1046/1046849.png" alt="زجاجة" class="item" draggable="true" ondragstart="drag(event)" data-type="plastic" id="bottle" />
+    <div class="items" id="items">
+      <!-- Organic -->
+      <img src="https://cdn-icons-png.flaticon.com/512/415/415733.png" alt="تفاحة" class="item" draggable="true" ondragstart="drag(event)" data-type="organic" />
+      <img src="https://cdn-icons-png.flaticon.com/512/590/590685.png" alt="موزة" class="item" draggable="true" ondragstart="drag(event)" data-type="organic" />
+
+      <!-- Plastic -->
+      <img src="https://cdn-icons-png.flaticon.com/512/1046/1046849.png" alt="زجاجة" class="item" draggable="true" ondragstart="drag(event)" data-type="plastic" />
+      <img src="https://cdn-icons-png.flaticon.com/512/4274/4274546.png" alt="كيس بلاستيك" class="item" draggable="true" ondragstart="drag(event)" data-type="plastic" />
+
+      <!-- Paper -->
+      <img src="https://cdn-icons-png.flaticon.com/512/1600/1600435.png" alt="جريدة" class="item" draggable="true" ondragstart="drag(event)" data-type="paper" />
+      <img src="https://cdn-icons-png.flaticon.com/512/1680/1680209.png" alt="ورقة" class="item" draggable="true" ondragstart="drag(event)" data-type="paper" />
+
+      <!-- Metal -->
+      <img src="https://cdn-icons-png.flaticon.com/512/685/685352.png" alt="علبة صفيح" class="item" draggable="true" ondragstart="drag(event)" data-type="metal" />
+      <img src="https://cdn-icons-png.flaticon.com/512/2769/2769339.png" alt="مسمار" class="item" draggable="true" ondragstart="drag(event)" data-type="metal" />
     </div>
   </div>
 
+  <div id="result"></div>
+
   <script>
     let draggedItem = null;
+    let score = 0;
+    let timeLeft = 60;
+    let timerInterval = null;
+
+    const scoreDisplay = document.getElementById("score");
+    const timerDisplay = document.getElementById("timer");
+    const resultDisplay = document.getElementById("result");
+    const itemsContainer = document.getElementById("items");
 
     function allowDrop(event) {
       event.preventDefault();
@@ -88,18 +127,56 @@
 
     function drop(event) {
       event.preventDefault();
-
       const bin = event.currentTarget;
       const binType = bin.getAttribute('data-type');
       const itemType = draggedItem.getAttribute('data-type');
 
-      if (bin && itemType === binType) {
+      if (binType === itemType) {
         bin.appendChild(draggedItem);
-        alert("✅ أحسنت! تم الفرز بشكل صحيح.");
+        score += 10;
+        draggedItem.setAttribute('draggable', false); // لا يمكن سحب العنصر مرة أخرى
+        updateScore();
+        checkWin();
       } else {
-        alert("❌ خطأ! حاول مرة أخرى.");
+        score -= 5;
+        updateScore();
+        alert("❌ خطأ! هذا العنصر لا ينتمي لهذه السلة.");
       }
     }
+
+    function updateScore() {
+      scoreDisplay.textContent = score;
+    }
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        timerDisplay.textContent = timeLeft;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          endGame(false);
+        }
+      }, 1000);
+    }
+
+    function checkWin() {
+      const remainingItems = itemsContainer.querySelectorAll(".item[draggable='true']");
+      if (remainingItems.length === 0) {
+        clearInterval(timerInterval);
+        endGame(true);
+      }
+    }
+
+    function endGame(won) {
+      if (won) {
+        resultDisplay.innerHTML = `🎉 أحسنت! لقد أنهيت اللعبة بنجاح. نقاطك: ${score}`;
+      } else {
+        resultDisplay.innerHTML = `⏰ انتهى الوقت! نقاطك النهائية: ${score}`;
+      }
+    }
+
+    // بدء المؤقت تلقائيًا
+    window.onload = startTimer;
   </script>
 
 </body>
